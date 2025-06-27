@@ -34,22 +34,40 @@ repeat wait() until localplayer
 
 print("</> : Selected Team")
 
-if not localplayer.Team then
-	repeat wait()
-		local succ,err = pcall(function()
-			repeat wait() until localplayer.PlayerGui:FindFirstChild("Main (minimal)") or localplayer.PlayerGui["Main (minimal)"]:FindFirstChild("ChooseTeam")
-			repeat wait()
-				if localplayer.PlayerGui["Main (minimal)"].ChooseTeam.Visible then
-					for i, v in pairs(getconnections(localplayer.PlayerGui["Main (minimal)"].ChooseTeam.Container.Pirates.Frame.TextButton.Activated)) do                                                                                                
-						v.Function()
-					end
-				end
-			until localplayer.Team
-		end)
-	until localplayer.Team
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+
+if getgenv().KaitunConfig["Team"] == "Marines" then
+    ReplicatedStorage.Remotes.CommF_:InvokeServer("SetTeam", "Marines")
+elseif getgenv().KaitunConfig["Team"] == "Pirates" then
+    ReplicatedStorage.Remotes.CommF_:InvokeServer("SetTeam", "Pirates")
 end
 
-repeat wait() until localplayer.Character
+repeat
+    task.wait(1)
+    local chooseTeam = playerGui:FindFirstChild("ChooseTeam", true)
+    local uiController = playerGui:FindFirstChild("UIController", true)
+
+    if chooseTeam and chooseTeam.Visible and uiController then
+        for _, v in pairs(getgc(true)) do
+            if type(v) == "function" and getfenv(v).script == uiController then
+                local constant = getconstants(v)
+                pcall(function()
+                    if (constant[1] == "Pirates" or constant[1] == "Marines") and #constant == 1 then
+                        if constant[1] == getgenv().KaitunConfig["Team"] then
+                            v(getgenv().KaitunConfig)
+                        end
+                    end
+                end)
+            end
+        end
+    end
+until player.Team
+
+
 
 -- Created Variable Script.
 
@@ -209,6 +227,8 @@ getgenv().KaitunConfig = getgenv().KaitunConfig or {
 		["Locking FPS"] = 240,
 	},
 }
+
+end
 
 print("</> : Get Config Value")
 
